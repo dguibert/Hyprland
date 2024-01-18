@@ -71,23 +71,14 @@
   }: let
     inherit (nixpkgs) lib;
     eachSystem = lib.genAttrs (import systems);
-    pkgsFor = eachSystem (system:
-      import nixpkgs {
-        localSystem = system;
-        overlays = with self.overlays; [
+    pkgsFor = eachSystem (system: nixpkgs.legacyPackages.${system}.appendOverlays
+        (with self.overlays; [
           hyprland-packages
           hyprland-extras
-        ];
-      });
+        ])
+      );
     pkgsCrossFor = eachSystem (system: crossSystem:
-      import nixpkgs {
-        localSystem = system;
-        inherit crossSystem;
-        overlays = with self.overlays; [
-          hyprland-packages
-          hyprland-extras
-        ];
-      });
+        pkgsFor.${system}.pkgsCross.${crossSystem});
   in {
     overlays = import ./nix/overlays.nix {inherit self lib inputs;};
 
@@ -125,7 +116,7 @@
 
         xdg-desktop-portal-hyprland
         ;
-      hyprland-cross = (pkgsCrossFor.${system} "aarch64-linux").hyprland;
+      hyprland-cross = (pkgsCrossFor.${system} "aarch64-multiplatform").hyprland;
     });
 
     devShells = eachSystem (system: {
