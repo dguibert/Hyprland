@@ -57,14 +57,12 @@
   }: let
     inherit (nixpkgs) lib;
     eachSystem = lib.genAttrs (import systems);
-    pkgsFor = eachSystem (system:
-      import nixpkgs {
-        localSystem = system;
-        overlays = with self.overlays; [
+    pkgsFor = eachSystem (system: nixpkgs.legacyPackages.${system}.appendOverlays
+        (with self.overlays; [
           hyprland-packages
           hyprland-extras
-        ];
-      });
+        ]
+      ));
   in {
     overlays = import ./nix/overlays.nix {inherit self lib inputs;};
 
@@ -81,13 +79,13 @@
       inherit
         (pkgsFor.${system})
         # hyprland-packages
-        
+
         hyprland
         hyprland-debug
         hyprland-legacy-renderer
         hyprland-unwrapped
         # hyprland-extras
-        
+
         xdg-desktop-portal-hyprland
         # dependencies
         
